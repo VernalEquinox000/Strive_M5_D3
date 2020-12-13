@@ -4,6 +4,8 @@ const { userInfo } = require("os")
 const path = require("path")
 const uniqid = require("uniqid")
 
+const {check, validationResult} = require("express-validator")
+
 const router = express.Router() 
 
 //[EXTRA] GET /students/:studentsId/projects/ => get all the projects for a student with a given ID
@@ -63,43 +65,77 @@ router.get("/:id", (req, res, next) => {
     
  })
 
-router.post("/", (req, res) => {
-    const projects = readFile("projects.json") 
-    const newProject = {
-        ...req.body,
-        ID: uniqid(),
-        modifiedAt: new Date(),
-    }
-    console.log(newProject.ID)
-    console.log(newProject)
+router.post("/", [check("name").exists().withMessage("Name is a mandatory field")], (req, res) => {
+    try {
+        const errors = validationResult(req)
 
-    projects.push(newProject)
-    fs.writeFileSync(path.join(__dirname, "projects.json"), JSON.stringify(projects))
-    res.status(201).send({id: newProject.ID})
+        if (!errors.isEmpty())
+        {
+            const err = new Error()
+            err.message = errors
+            err.httpStatusCode = 400
+            next(err)
+
+        }
+        else {const projects = readFile("projects.json")
+        const newProject = {
+            ...req.body,
+            ID: uniqid(),
+            modifiedAt: new Date(),
+        }
+            console.log(newProject.ID)
+        console.log(newProject)
+
+        projects.push(newProject)
+        fs.writeFileSync(path.join(__dirname, "projects.json"), JSON.stringify(projects))
+        res.status(201).send({ id: newProject.ID })
+        
+        
+        }
+
+        
+        
+    }
+    catch (error) {
+        next(error)
+
+    }
  })
 
 router.put("/:id", (req, res) => {
-    const projects = readFile("projects.json") 
-    const newProjects = projects.filter(project => project.ID !== req.params.id)
+    try {
+        const projects = readFile("projects.json")
+        const newProjects = projects.filter(project => project.ID !== req.params.id)
 
-    const modifiedProject = {
-        ...req.body,
-        ID: req.params.id,
-        modifiedAt: new Date(),
+        const modifiedProject = {
+            ...req.body,
+            ID: req.params.id,
+            modifiedAt: new Date(),
+        }
+
+        newProjects.push(modifiedProject)
+        fs.writeFileSync(path.join(__dirname, "projects.json"), JSON.stringify(newProjects))
+        res.send({ modifiedProject })
     }
-
-    newProjects.push(modifiedProject)
-    fs.writeFileSync(path.join(__dirname, "projects.json"), JSON.stringify(newProjects))
-    res.send({ modifiedProject })
-
+    catch (error) {
+        console.log(error)
+        next(error)
+    }
     })
 
-router.delete("/:id", (req, res) => {
-    const projects = readFile("projects.json") 
-    const newProjects = projects.filter(project => project.ID !== req.params.id)
 
-    fs.writeFileSync(path.join(__dirname, "projects.json"), JSON.stringify(newProjects))
-    res.status(204).send()
+router.delete("/:id", (req, res) => {
+    try {
+        const projects = readFile("projects.json")
+        const newProjects = projects.filter(project => project.ID !== req.params.id)
+
+        fs.writeFileSync(path.join(__dirname, "projects.json"), JSON.stringify(newProjects))
+        res.status(204).send()
+    }
+    catch (error) {
+        console.log(error)
+        next(error)
+    }
  })
 
 

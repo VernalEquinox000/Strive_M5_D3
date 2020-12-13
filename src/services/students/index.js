@@ -156,7 +156,7 @@ router.get("/:identifier/projects", (req, res) => { //4
     const projectOfStudent = projectsArray.filter(project => project.studentID === student.ID)
     console.log(projectOfStudent)
     //if (projectOfStudent.length>0)
-    res.send(projectOfStudent) //5 
+    res.send({...student, projects:projectOfStudent}) //5 
 })
 
 
